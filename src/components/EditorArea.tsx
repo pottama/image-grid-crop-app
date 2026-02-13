@@ -479,6 +479,13 @@ export function EditorArea({
     setPan({ x: 0, y: 0 });
   }, []);
 
+  const zoomBy = useCallback((delta: number) => {
+    setScale((s) => {
+      const next = Math.round((s + delta) * 100) / 100;
+      return Math.max(0.2, Math.min(5, next));
+    });
+  }, []);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 flex-wrap">
@@ -513,12 +520,45 @@ export function EditorArea({
         </button>
         <button
           type="button"
+          onClick={() => zoomBy(-0.1)}
+          disabled={loading}
+          className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50"
+          title="縮小"
+          aria-label="縮小"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
+        </button>
+        <button
+          type="button"
           onClick={resetView}
           disabled={loading}
           className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50"
           title="表示をリセット"
+          aria-label="表示をリセット"
         >
-          表示リセット
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" className="bi bi-aspect-ratio" viewBox="0 0 16 16">
+            <path d="M0 3.5A1.5 1.5 0 0 1 1.5 2h13A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 0 12.5zM1.5 3a.5.5 0 0 0-.5.5v9a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5z"/>
+            <path d="M2 4.5a.5.5 0 0 1 .5-.5h3a.5.5 0 0 1 0 1H3v2.5a.5.5 0 0 1-1 0zm12 7a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1H13V8.5a.5.5 0 0 1 1 0z"/>
+          </svg>
+        </button>
+        <button
+          type="button"
+          onClick={() => zoomBy(0.1)}
+          disabled={loading}
+          className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50"
+          title="拡大"
+          aria-label="拡大"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            <line x1="11" y1="8" x2="11" y2="14" />
+            <line x1="8" y1="11" x2="14" y2="11" />
+          </svg>
         </button>
         <div className="flex border border-slate-200 rounded-lg overflow-hidden">
           <button
