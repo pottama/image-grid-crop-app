@@ -65,7 +65,7 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
   return (
     <div className="flex flex-col h-full min-h-0">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
-        <span className="font-medium text-slate-800 mt-4">プレビュー</span>
+        <span className="font-medium text-slate-800 mt-2">プレビュー</span>
         <div className="flex items-center gap-2 mt-4 lg:mt-0">
           <button
             type="button"
