@@ -459,19 +459,23 @@ export function EditorArea({
 
   const setCropWidth = useCallback(
     (v: number) => {
-      if (!cropRect || !imgSize) return;
-      const maxW = imgSize.w - cropRect.x;
-      setCropRect((r) => ({ ...r!, w: Math.max(MIN_CROP_SIZE, Math.min(ensureEven(v), ensureEven(maxW))) }));
+      setCropRect((r) => {
+        if (!r || !imgSize) return r;
+        const maxW = imgSize.w - r.x;
+        return { ...r, w: Math.max(MIN_CROP_SIZE, Math.min(ensureEven(v), ensureEven(maxW))) };
+      });
     },
-    [cropRect, imgSize]
+    [imgSize]
   );
   const setCropHeight = useCallback(
     (v: number) => {
-      if (!cropRect || !imgSize) return;
-      const maxH = imgSize.h - cropRect.y;
-      setCropRect((r) => ({ ...r!, h: Math.max(MIN_CROP_SIZE, Math.min(ensureEven(v), ensureEven(maxH))) }));
+      setCropRect((r) => {
+        if (!r || !imgSize) return r;
+        const maxH = imgSize.h - r.y;
+        return { ...r, h: Math.max(MIN_CROP_SIZE, Math.min(ensureEven(v), ensureEven(maxH))) };
+      });
     },
-    [cropRect, imgSize]
+    [imgSize]
   );
 
   const resetView = useCallback(() => {
@@ -629,9 +633,12 @@ export function EditorArea({
               type="number"
               min={MIN_CROP_SIZE}
               max={cropRect && imgSize ? imgSize.w - cropRect.x : undefined}
+              step="2"
               value={cropRect ? ensureEven(cropRect.w) : 0}
-              onChange={(e) => setCropWidth(parseInt(e.target.value, 10) || 0)}
-              onBlur={(e) => setCropWidth(parseInt(e.target.value, 10) || 0)}
+              onInput={(e) => {
+                const val = parseInt((e.target as HTMLInputElement).value, 10);
+                if (!isNaN(val)) setCropWidth(val);
+              }}
               className="w-20 px-2 py-1 border border-slate-300 rounded text-sm"
             />
           </label>
@@ -641,9 +648,12 @@ export function EditorArea({
               type="number"
               min={MIN_CROP_SIZE}
               max={cropRect && imgSize ? imgSize.h - cropRect.y : undefined}
+              step="2"
               value={cropRect ? ensureEven(cropRect.h) : 0}
-              onChange={(e) => setCropHeight(parseInt(e.target.value, 10) || 0)}
-              onBlur={(e) => setCropHeight(parseInt(e.target.value, 10) || 0)}
+              onInput={(e) => {
+                const val = parseInt((e.target as HTMLInputElement).value, 10);
+                if (!isNaN(val)) setCropHeight(val);
+              }}
               className="w-20 px-2 py-1 border border-slate-300 rounded text-sm"
             />
           </label>
