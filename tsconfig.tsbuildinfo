@@ -1,0 +1,1 @@
+{"root":["./src/app.tsx","./src/main.tsx","./src/types.ts","./src/vite-env.d.ts","./src/components/editorarea.tsx","./src/components/previewarea.tsx","./src/components/uploadscreen.tsx","./src/components/workscreen.tsx","./src/utils/backgroundremoval.ts","./src/utils/evensize.ts","./src/utils/imageexport.ts","./src/utils/validation.ts"],"version":"5.6.3"}
