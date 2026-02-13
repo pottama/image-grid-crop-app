@@ -44,6 +44,8 @@ export function EditorArea({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [mode, setMode] = useState<EditorMode>('grid');
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState<{ key: string; current: number; total: number } | null>(null);
+  const [bgMode, setBgMode] = useState<'checkerboard' | 'slate'>('checkerboard');
 
   // Grid mode
   const [rows, setRows] = useState(2);
@@ -366,8 +368,11 @@ export function EditorArea({
 
   const runBackgroundRemoval = useCallback(async () => {
     setLoading(true);
+    setProgress(null);
     try {
-      const blob = await removeBackground(imageDataUrl);
+      const blob = await removeBackground(imageDataUrl, (key, current, total) => {
+        setProgress({ key, current, total });
+      });
       const reader = new FileReader();
       reader.onload = () => onReplaceImage(reader.result as string);
       reader.readAsDataURL(blob);
@@ -376,6 +381,7 @@ export function EditorArea({
       alert('処理に失敗しました。画像サイズを小さくしてください。');
     } finally {
       setLoading(false);
+      setProgress(null);
     }
   }, [imageDataUrl, onReplaceImage]);
 
@@ -493,14 +499,29 @@ export function EditorArea({
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 flex-wrap">
-        <button
-          type="button"
-          onClick={runBackgroundRemoval}
-          disabled={loading}
-          className="px-3 py-1.5 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-700 disabled:opacity-50"
-        >
-          {loading ? 'AI解析中...' : '背景透過'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={runBackgroundRemoval}
+            disabled={loading}
+            className="px-3 py-1.5 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-700 disabled:opacity-50"
+          >
+            {loading ? 'AI解析中...' : '背景透過'}
+          </button>
+          {loading && progress && (
+            <div className="flex items-center gap-2">
+              <div className="w-40 h-2 bg-slate-200 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-blue-600 transition-all duration-300"
+                  style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                ></div>
+              </div>
+              <span className="text-xs text-slate-600">
+                {Math.round((progress.current / progress.total) * 100)}%
+              </span>
+            </div>
+          )}
+        </div>
         <button
           type="button"
           onClick={onUndo}
@@ -566,6 +587,30 @@ export function EditorArea({
           </svg>
         </button>
         <div className="w-px h-6 bg-slate-300"></div>
+        <button
+          type="button"
+          onClick={() => setBgMode(bgMode === 'checkerboard' ? 'slate' : 'checkerboard')}
+          className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
+          title="背景切り替え"
+        >
+          {bgMode === 'checkerboard' ? (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <rect x="3" y="3" width="3" height="3" fill="currentColor" />
+              <rect x="9" y="3" width="3" height="3" fill="currentColor" />
+              <rect x="15" y="3" width="3" height="3" fill="currentColor" />
+              <rect x="3" y="9" width="3" height="3" fill="currentColor" />
+              <rect x="9" y="9" width="3" height="3" fill="currentColor" />
+              <rect x="15" y="9" width="3" height="3" fill="currentColor" />
+              <rect x="3" y="15" width="3" height="3" fill="currentColor" />
+              <rect x="9" y="15" width="3" height="3" fill="currentColor" />
+              <rect x="15" y="15" width="3" height="3" fill="currentColor" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5">
+              <rect x="3" y="3" width="18" height="18" fill="currentColor" />
+            </svg>
+          )}
+        </button>
         <div className="flex border border-slate-200 rounded-lg overflow-hidden">
           <button
             type="button"
@@ -672,7 +717,9 @@ export function EditorArea({
 
       <div
         ref={containerRef}
-        className="flex-1 min-h-[400px] checkerboard overflow-hidden relative flex items-center justify-center"
+        className={`flex-1 min-h-[400px] overflow-hidden relative flex items-center justify-center ${
+          bgMode === 'checkerboard' ? 'checkerboard' : 'bg-slate-500'
+        }`}
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
@@ -682,7 +729,7 @@ export function EditorArea({
       >
         {imageDataUrl && (
           <div
-            className="absolute bg-slate-100 flex items-center justify-center"
+            className="absolute flex items-center justify-center"
             style={
               imgSize
                 ? {
@@ -705,7 +752,9 @@ export function EditorArea({
               ref={imageRef}
               src={imageDataUrl}
               alt=""
-              className="block w-full h-full object-contain"
+              className={`block w-full h-full object-contain ${
+                bgMode === 'checkerboard' ? 'checkerboard' : ''
+              }`}
               style={{ background: 'transparent' }}
               onLoad={imageOnLoad}
               draggable={false}
