@@ -39,7 +39,7 @@ export function WorkScreen({
   const baseName = file.name.replace(/\.[^.]+$/, '');
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-100">
+    <div className="h-screen flex flex-col bg-slate-100">
       <header className="flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 shrink-0">
         <h1 className="text-lg font-semibold text-slate-800 truncate max-w-[200px]" title={file.name}>
           {file.name}
@@ -66,7 +66,7 @@ export function WorkScreen({
             baseName={baseName}
           />
         </section>
-        <section className="w-full lg:w-96 shrink-0 flex flex-col bg-slate-50">
+        <section className="w-full lg:w-96 shrink-0 flex flex-col bg-slate-50 min-h-0 overflow-hidden">
           <PreviewArea
             processedImages={processedImages}
             baseName={baseName}

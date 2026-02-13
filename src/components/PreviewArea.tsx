@@ -63,23 +63,23 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
   }, [processedImages, baseName]);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
-        <span className="font-medium text-slate-800">プレビュー</span>
-        <div className="flex items-center gap-2">
+        <span className="font-medium text-slate-800 mt-4">プレビュー</span>
+        <div className="flex items-center gap-2 mt-4 lg:mt-0">
           <button
             type="button"
             onClick={() => setViewMode('grid')}
             className={`px-2 py-1 text-sm rounded ${viewMode === 'grid' ? 'bg-slate-200' : 'hover:bg-slate-100'}`}
           >
-            グリッド表示
+            グリッド
           </button>
           <button
             type="button"
             onClick={() => setViewMode('list')}
             className={`px-2 py-1 text-sm rounded ${viewMode === 'list' ? 'bg-slate-200' : 'hover:bg-slate-100'}`}
           >
-            リスト表示
+            リスト
           </button>
         </div>
       </div>

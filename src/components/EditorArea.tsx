@@ -187,6 +187,8 @@ export function EditorArea({
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
+      // Only zoom when Command (meta) key is pressed (macOS Command key)
+      if (!e.metaKey) return;
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
       setScale((s) => Math.max(0.2, Math.min(5, s + delta)));
@@ -472,6 +474,11 @@ export function EditorArea({
     [cropRect, imgSize]
   );
 
+  const resetView = useCallback(() => {
+    setScale(1);
+    setPan({ x: 0, y: 0 });
+  }, []);
+
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 flex-wrap">
@@ -503,6 +510,15 @@ export function EditorArea({
             <path d="M3 7v6h6" />
             <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
           </svg>
+        </button>
+        <button
+          type="button"
+          onClick={resetView}
+          disabled={loading}
+          className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50"
+          title="表示をリセット"
+        >
+          表示リセット
         </button>
         <div className="flex border border-slate-200 rounded-lg overflow-hidden">
           <button
