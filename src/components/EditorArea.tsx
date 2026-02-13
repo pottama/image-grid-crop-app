@@ -717,9 +717,7 @@ export function EditorArea({
 
       <div
         ref={containerRef}
-        className={`flex-1 min-h-[400px] overflow-hidden relative flex items-center justify-center ${
-          bgMode === 'checkerboard' ? 'checkerboard' : 'bg-slate-500'
-        }`}
+        className="flex-1 min-h-[400px] bg-slate-300 overflow-hidden relative flex items-center justify-center"
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
@@ -729,7 +727,9 @@ export function EditorArea({
       >
         {imageDataUrl && (
           <div
-            className="absolute flex items-center justify-center"
+            className={`absolute flex items-center justify-center ${
+              bgMode === 'checkerboard' ? 'checkerboard' : 'bg-slate-500'
+            }`}
             style={
               imgSize
                 ? {
@@ -752,9 +752,7 @@ export function EditorArea({
               ref={imageRef}
               src={imageDataUrl}
               alt=""
-              className={`block w-full h-full object-contain ${
-                bgMode === 'checkerboard' ? 'checkerboard' : ''
-              }`}
+              className="block w-full h-full object-contain"
               style={{ background: 'transparent' }}
               onLoad={imageOnLoad}
               draggable={false}
