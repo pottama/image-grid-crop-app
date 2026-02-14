@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect } from 'react';
 import JSZip from 'jszip';
 import type { ProcessedImage } from '../types';
 import { ensureEven } from '../utils/evenSize';
+import pica from 'pica';
 
 interface PreviewAreaProps {
   processedImages: ProcessedImage[];
@@ -110,10 +111,13 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll, b
 
   async function resizeImageBlob(blob: Blob, w: number | '', h: number | '', keep: boolean): Promise<Blob> {
     if (!w && !h) return blob;
+
+    const picaRunner = pica();
+
     return new Promise((resolve, reject) => {
       const url = URL.createObjectURL(blob);
       const img = new Image();
-      img.onload = () => {
+      img.onload = async () => {
         const naturalW = img.naturalWidth;
         const naturalH = img.naturalHeight;
         let dw = typeof w === 'number' && w > 0 ? w : naturalW;
@@ -146,24 +150,23 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll, b
           return resolve(blob);
         }
 
-        const canvas = document.createElement('canvas');
-        canvas.width = targetWpx;
-        canvas.height = targetHpx;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
+        const dstCanvas = document.createElement('canvas');
+        dstCanvas.width = targetWpx;
+        dstCanvas.height = targetHpx;
+
+        try {
+          await picaRunner.resize(img, dstCanvas, {
+            unsharpAmount: 80,
+            unsharpRadius: 0.6,
+            unsharpThreshold: 2,
+          });
+          const resultBlob = await picaRunner.toBlob(dstCanvas, blob.type || 'image/png', 0.92);
           URL.revokeObjectURL(url);
-          return reject(new Error('Canvas context not available'));
+          resolve(resultBlob);
+        } catch (err) {
+          URL.revokeObjectURL(url);
+          reject(err);
         }
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(
-          (b) => {
-            URL.revokeObjectURL(url);
-            if (b) resolve(b);
-            else reject(new Error('toBlob failed'));
-          },
-          blob.type || 'image/png',
-          0.92
-        );
       };
       img.onerror = () => {
         URL.revokeObjectURL(url);
