@@ -648,7 +648,7 @@ export function EditorArea({
         <div className="px-3 py-2 border-b border-slate-200 space-y-1">
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2">
-              <span className="text-sm text-slate-600">横（列）</span>
+              <span className="text-sm text-slate-600">列</span>
               <input
                 type="number"
                 min={1}
@@ -659,7 +659,7 @@ export function EditorArea({
               />
             </label>
             <label className="flex items-center gap-2">
-              <span className="text-sm text-slate-600">縦（行）</span>
+              <span className="text-sm text-slate-600">行</span>
               <input
                 type="number"
                 min={1}
@@ -670,18 +670,18 @@ export function EditorArea({
               />
             </label>
             {/* 分割セルの画像サイズ表示 */}
-            {gridFrame && rows > 0 && cols > 0 && (
+            {/* {gridFrame && rows > 0 && cols > 0 && (
               <span className="text-sm text-slate-600 mr-2">
-                セルサイズ（W × H）: {toEvenFloor(gridFrame.w / cols)} × {toEvenFloor(gridFrame.h / rows)}
+                [ {toEvenFloor(gridFrame.w / cols)} × {toEvenFloor(gridFrame.h / rows)} ]
               </span>
-            )}
+            )} */}
             <button
               type="button"
               onClick={runGridSplit}
               disabled={loading || !gridFrame}
               className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              切り抜き実行
+              カット
             </button>
           </div>
         </div>
@@ -751,14 +751,14 @@ export function EditorArea({
             disabled={loading || !cropRect}
             className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            切り抜き実行
+            カット
           </button>
         </div>
       )}
 
       <div
         ref={containerRef}
-        className="flex-1 min-h-[400px] bg-slate-300 overflow-auto relative flex items-center justify-center"
+        className="flex-1 min-h-[300px] bg-slate-300 overflow-auto relative flex items-center justify-center"
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}

@@ -47,7 +47,7 @@ export function WorkScreen({
   return (
     <div className="h-screen flex flex-col bg-slate-100">
       <header className="flex items-center justify-between px-4 py-4 bg-white border-b border-slate-200 shrink-0">
-        <h1 className="text-xl font-bold text-slate-900 break-words max-w-[calc(100%-120px)]" title={file.name}>
+        <h1 className="text-xl font-bold text-slate-900 break-words max-w-[calc(100%-120px)] truncate" title={file.name}>
           {file.name}
         </h1>
         <button
