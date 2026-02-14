@@ -40,3 +40,8 @@ npm run dev
 
 - `npm run build` … 本番ビルド
 - `npm run preview` … ビルド結果のプレビュー
+
+## デプロイ
+
+`npm run build` を実行すると `dist` ディレクトリに静的ファイルが生成されます。
+生成されたファイルは、Vercel、Netlify、GitHub Pages、Amazon S3 などの静的ホスティングサービスにそのままデプロイ可能です。
