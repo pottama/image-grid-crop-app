@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import JSZip from 'jszip';
 import type { ProcessedImage } from '../types';
+import { ensureEven } from '../utils/evenSize';
 
 interface PreviewAreaProps {
   processedImages: ProcessedImage[];
@@ -22,6 +23,15 @@ function getFileName(p: ProcessedImage): string {
 export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }: PreviewAreaProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [zipLoading, setZipLoading] = useState(false);
+  const [optsModalOpen, setOptsModalOpen] = useState(false);
+  const [modalTarget, setModalTarget] = useState<'all' | ProcessedImage | null>(null);
+  const [resizeEnabled, setResizeEnabled] = useState(false);
+  const [targetW, setTargetW] = useState<number | ''>('');
+  const [targetH, setTargetH] = useState<number | ''>('');
+  const [keepAspect, setKeepAspect] = useState(true);
+  const [processing, setProcessing] = useState(false);
+  const [origW, setOrigW] = useState<number | null>(null);
+  const [origH, setOrigH] = useState<number | null>(null);
 
   const handleClearAll = useCallback(() => {
     if (processedImages.length === 0) return;
@@ -31,42 +41,181 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
   }, [processedImages.length, onClearAll]);
 
   const handleDownload = useCallback((p: ProcessedImage) => {
-    const url = URL.createObjectURL(p.blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = getFileName(p);
-    a.click();
-    URL.revokeObjectURL(url);
+    setModalTarget(p);
+    setResizeEnabled(false);
+    setTargetW('');
+    setTargetH('');
+    setKeepAspect(true);
+    // load original dimensions for this image to enable aspect calculations
+    (async () => {
+      try {
+        const url = URL.createObjectURL(p.blob);
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = () => reject(new Error('Image load error'));
+          img.src = url;
+        });
+        const nW = img.naturalWidth;
+        const nH = img.naturalHeight;
+        setOrigW(nW);
+        setOrigH(nH);
+        // prefill inputs for single-image modal with the image's size (evenized)
+        setTargetW(ensureEven(Math.max(2, Math.round(nW))));
+        setTargetH(ensureEven(Math.max(2, Math.round(nH))));
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        setOrigW(null);
+        setOrigH(null);
+      } finally {
+        setOptsModalOpen(true);
+      }
+    })();
   }, []);
 
-  const handleDownloadAll = useCallback(async () => {
+  const handleDownloadAll = useCallback(() => {
     if (processedImages.length === 0) return;
-    setZipLoading(true);
-    try {
-      const zip = new JSZip();
-      for (const p of processedImages) {
-        zip.file(getFileName(p), p.blob);
-      }
-      const blob = await zip.generateAsync({ type: 'blob' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${baseName}_processed.zip`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error(e);
-      alert('ZIPの作成に失敗しました。');
-    } finally {
-      setZipLoading(false);
-    }
-  }, [processedImages, baseName]);
+    setModalTarget('all');
+    setResizeEnabled(false);
+    setTargetW('');
+    setTargetH('');
+    setKeepAspect(true);
+    // clear original dims when operating on multiple images
+    setOrigW(null);
+    setOrigH(null);
+    setOptsModalOpen(true);
+  }, [processedImages]);
 
-  return (
-    <div className="flex flex-col h-full min-h-0">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
-        <span className="font-medium text-slate-800 mt-2">プレビュー</span>
-        <div className="flex items-center gap-2 mt-4 lg:mt-0">
+  async function resizeImageBlob(blob: Blob, w: number | '', h: number | '', keep: boolean): Promise<Blob> {
+    if (!w && !h) return blob;
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => {
+        const naturalW = img.naturalWidth;
+        const naturalH = img.naturalHeight;
+        let dw = typeof w === 'number' && w > 0 ? w : naturalW;
+        let dh = typeof h === 'number' && h > 0 ? h : naturalH;
+        if (keep) {
+          const ratio = naturalW / naturalH;
+          if (typeof w === 'number' && w > 0 && !(typeof h === 'number' && h > 0)) {
+            dh = Math.round(w / ratio);
+          } else if (typeof h === 'number' && h > 0 && !(typeof w === 'number' && w > 0)) {
+            dw = Math.round(h * ratio);
+          } else if (typeof w === 'number' && w > 0 && typeof h === 'number' && h > 0) {
+            const targetRatio = w / h;
+            if (targetRatio > ratio) {
+              dh = h;
+              dw = Math.round(h * ratio);
+            } else {
+              dw = w;
+              dh = Math.round(w / ratio);
+            }
+          }
+        }
+
+        // Ensure even dimensions and at least 2px
+        const targetWpx = ensureEven(Math.max(2, Math.round(dw)));
+        const targetHpx = ensureEven(Math.max(2, Math.round(dh)));
+
+        // Prevent upscaling: if requested size is larger than original, keep original
+        if (targetWpx > naturalW || targetHpx > naturalH) {
+          URL.revokeObjectURL(url);
+          return resolve(blob);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = targetWpx;
+        canvas.height = targetHpx;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          URL.revokeObjectURL(url);
+          return reject(new Error('Canvas context not available'));
+        }
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(
+          (b) => {
+            URL.revokeObjectURL(url);
+            if (b) resolve(b);
+            else reject(new Error('toBlob failed'));
+          },
+          blob.type || 'image/png',
+          0.92
+        );
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        reject(new Error('Image load error'));
+      };
+      img.src = url;
+    });
+  }
+
+  const performZipWithOptions = useCallback(
+    async (images: ProcessedImage[]) => {
+      setProcessing(true);
+      setZipLoading(true);
+      try {
+        const zip = new JSZip();
+        for (const p of images) {
+          let blob = p.blob;
+          if (resizeEnabled) {
+            blob = await resizeImageBlob(p.blob, targetW as number | '', targetH as number | '', keepAspect);
+          }
+          zip.file(getFileName({ ...p, blob }), blob);
+        }
+        const outBlob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(outBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${baseName}_processed.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        console.error(e);
+        alert('ZIPの作成に失敗しました。');
+      } finally {
+        setProcessing(false);
+        setZipLoading(false);
+        setOptsModalOpen(false);
+      }
+    },
+    [resizeEnabled, targetW, targetH, keepAspect, baseName]
+  );
+
+  const performIndividualDownloads = useCallback(
+    async (images: ProcessedImage[]) => {
+      setProcessing(true);
+      try {
+        for (const p of images) {
+          let blob = p.blob;
+          if (resizeEnabled) {
+            blob = await resizeImageBlob(p.blob, targetW as number | '', targetH as number | '', keepAspect);
+          }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = getFileName(p);
+          a.click();
+          URL.revokeObjectURL(url);
+          await new Promise((r) => setTimeout(r, 50));
+        }
+      } catch (e) {
+        console.error(e);
+        alert('ダウンロードに失敗しました。');
+      } finally {
+        setProcessing(false);
+        setOptsModalOpen(false);
+      }
+    },
+    [resizeEnabled, targetW, targetH, keepAspect]
+  );
+
+              return (
+              <div className="flex flex-col h-full min-h-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
+                <span className="font-medium text-slate-800 mt-2">プレビュー</span>
+              <div className="flex items-center gap-2 mt-4 lg:mt-0">
           <button
             type="button"
             onClick={() => setViewMode('grid')}
@@ -108,6 +257,107 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
           プレビューを全部クリア
         </button>
       </div>
+
+      {optsModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !processing && setOptsModalOpen(false)} />
+          <div className="bg-white rounded-lg shadow-lg p-4 w-[480px] z-10">
+            <h3 className="text-lg font-medium mb-2">出力オプション</h3>
+            <label className="flex items-center gap-2 mb-2">
+              <input type="checkbox" checked={resizeEnabled} onChange={(e) => setResizeEnabled(e.target.checked)} />
+              <span className="text-sm text-slate-700">リサイズして出力</span>
+            </label>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <label className="flex flex-col text-sm">
+                横 (px)
+                <input
+                  type="number"
+                  min={1}
+                  value={targetW}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                    if (val === '') {
+                      setTargetW('');
+                      if (keepAspect) setTargetH('');
+                      return;
+                    }
+                    let w = val as number;
+                    if (keepAspect && modalTarget && modalTarget !== 'all' && origW && origH) {
+                      // prevent upscaling by capping to original width
+                      if (w > origW) w = origW;
+                      const hCalc = Math.round((w * origH) / origW);
+                      const hEven = ensureEven(Math.max(2, hCalc));
+                      const wEven = ensureEven(Math.max(2, Math.round(w)));
+                      setTargetW(wEven);
+                      setTargetH(hEven);
+                    } else {
+                      setTargetW(Math.round(w));
+                    }
+                  }}
+                  disabled={!resizeEnabled}
+                  className="mt-1 px-2 py-1 border border-slate-300 rounded"
+                />
+              </label>
+              <label className="flex flex-col text-sm">
+                縦 (px)
+                <input
+                  type="number"
+                  min={1}
+                  value={targetH}
+                  onChange={(e) => {
+                    const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
+                    if (val === '') {
+                      setTargetH('');
+                      if (keepAspect) setTargetW('');
+                      return;
+                    }
+                    let h = val as number;
+                    if (keepAspect && modalTarget && modalTarget !== 'all' && origW && origH) {
+                      // prevent upscaling by capping to original height
+                      if (h > origH) h = origH;
+                      const wCalc = Math.round((h * origW) / origH);
+                      const wEven = ensureEven(Math.max(2, wCalc));
+                      const hEven = ensureEven(Math.max(2, Math.round(h)));
+                      setTargetH(hEven);
+                      setTargetW(wEven);
+                    } else {
+                      setTargetH(Math.round(h));
+                    }
+                  }}
+                  disabled={!resizeEnabled}
+                  className="mt-1 px-2 py-1 border border-slate-300 rounded"
+                />
+              </label>
+            </div>
+            <label className="flex items-center gap-2 mb-4">
+              <input type="checkbox" checked={keepAspect} onChange={(e) => setKeepAspect(e.target.checked)} disabled={!resizeEnabled} />
+              <span className="text-sm text-slate-700">アスペクト比を固定する</span>
+            </label>
+            <div className="flex items-center justify-end gap-2">
+              <button type="button" onClick={() => setOptsModalOpen(false)} disabled={processing} className="px-3 py-1.5 border rounded text-sm">キャンセル</button>
+              {modalTarget === 'all' ? (
+                <button
+                  type="button"
+                  onClick={() => performZipWithOptions(processedImages)}
+                  disabled={processing}
+                  className="px-3 py-1.5 bg-slate-800 text-white rounded text-sm"
+                >
+                  ZIPで一括ダウンロード
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => modalTarget && performIndividualDownloads([modalTarget])}
+                  disabled={processing}
+                  className="px-3 py-1.5 bg-slate-800 text-white rounded text-sm"
+                >
+                  保存
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-auto p-3">
         {processedImages.length === 0 ? (
