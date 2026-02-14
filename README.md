@@ -8,6 +8,7 @@
 - Vite
 - Tailwind CSS
 - @imgly/background-removal（AI背景削除）
+- Pica（高品質画像リサイズ）
 - JSZip（一括ZIPダウンロード）
 
 ## 使い方
