@@ -717,7 +717,7 @@ export function EditorArea({
 
       <div
         ref={containerRef}
-        className="flex-1 min-h-[400px] bg-slate-300 overflow-hidden relative flex items-center justify-center"
+        className="flex-1 min-h-[400px] bg-slate-300 overflow-auto relative flex items-center justify-center"
         onWheel={onWheel}
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}

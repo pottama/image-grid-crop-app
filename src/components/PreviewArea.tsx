@@ -73,16 +73,37 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
     })();
   }, []);
 
-  const handleDownloadAll = useCallback(() => {
+  const handleDownloadAll = useCallback(async () => {
     if (processedImages.length === 0) return;
+
+    const dims = await Promise.all(
+      processedImages.map((p) => {
+        return new Promise<{ w: number; h: number }>((resolve) => {
+          const img = new Image();
+          const url = URL.createObjectURL(p.blob);
+          img.onload = () => {
+            resolve({ w: img.naturalWidth, h: img.naturalHeight });
+            URL.revokeObjectURL(url);
+          };
+          img.onerror = () => {
+            resolve({ w: 0, h: 0 });
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        });
+      })
+    );
+
+    const maxW = dims.reduce((acc, cur) => Math.max(acc, cur.w), 0);
+    const maxH = dims.reduce((acc, cur) => Math.max(acc, cur.h), 0);
+
     setModalTarget('all');
     setResizeEnabled(false);
-    setTargetW('');
-    setTargetH('');
+    setTargetW(ensureEven(Math.max(2, maxW)));
+    setTargetH(ensureEven(Math.max(2, maxH)));
     setKeepAspect(true);
-    // clear original dims when operating on multiple images
-    setOrigW(null);
-    setOrigH(null);
+    setOrigW(ensureEven(Math.max(2, maxW)));
+    setOrigH(ensureEven(Math.max(2, maxH)));
     setOptsModalOpen(true);
   }, [processedImages]);
 
@@ -272,7 +293,8 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
                 横 (px)
                 <input
                   type="number"
-                  min={1}
+                  min={2}
+                  step="2"
                   value={targetW}
                   onChange={(e) => {
                     const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
@@ -282,7 +304,7 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
                       return;
                     }
                     let w = val as number;
-                    if (keepAspect && modalTarget && modalTarget !== 'all' && origW && origH) {
+                    if (keepAspect && modalTarget && origW && origH) {
                       // prevent upscaling by capping to original width
                       if (w > origW) w = origW;
                       const hCalc = Math.round((w * origH) / origW);
@@ -302,7 +324,8 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
                 縦 (px)
                 <input
                   type="number"
-                  min={1}
+                  min={2}
+                  step="2"
                   value={targetH}
                   onChange={(e) => {
                     const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
@@ -312,7 +335,7 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
                       return;
                     }
                     let h = val as number;
-                    if (keepAspect && modalTarget && modalTarget !== 'all' && origW && origH) {
+                    if (keepAspect && modalTarget && origW && origH) {
                       // prevent upscaling by capping to original height
                       if (h > origH) h = origH;
                       const wCalc = Math.round((h * origW) / origH);
@@ -342,7 +365,7 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
                   disabled={processing}
                   className="px-3 py-1.5 bg-slate-800 text-white rounded text-sm"
                 >
-                  ZIPで一括ダウンロード
+                  一括ダウンロード (ZIP)
                 </button>
               ) : (
                 <button
