@@ -617,14 +617,14 @@ export function EditorArea({
             onClick={() => setMode('grid')}
             className={`px-3 py-1.5 text-sm ${mode === 'grid' ? 'bg-slate-200' : 'bg-white hover:bg-slate-50'}`}
           >
-            グリッド分割
+            グリッド
           </button>
           <button
             type="button"
             onClick={() => setMode('crop')}
             className={`px-3 py-1.5 text-sm ${mode === 'crop' ? 'bg-slate-200' : 'bg-white hover:bg-slate-50'}`}
           >
-            切り抜き
+            範囲指定
           </button>
         </div>
       </div>
@@ -632,17 +632,6 @@ export function EditorArea({
       {mode === 'grid' && (
         <div className="px-3 py-2 border-b border-slate-200 space-y-1">
           <div className="flex items-center gap-4">
-            <label className="flex items-center gap-2">
-              <span className="text-sm text-slate-600">縦（行）</span>
-              <input
-                type="number"
-                min={1}
-                max={MAX_GRID}
-                value={rows}
-                onChange={(e) => setRowsSafe(parseInt(e.target.value, 10) || 1)}
-                className="w-16 px-2 py-1 border border-slate-300 rounded text-sm"
-              />
-            </label>
             <label className="flex items-center gap-2">
               <span className="text-sm text-slate-600">横（列）</span>
               <input
@@ -654,10 +643,21 @@ export function EditorArea({
                 className="w-16 px-2 py-1 border border-slate-300 rounded text-sm"
               />
             </label>
+            <label className="flex items-center gap-2">
+              <span className="text-sm text-slate-600">縦（行）</span>
+              <input
+                type="number"
+                min={1}
+                max={MAX_GRID}
+                value={rows}
+                onChange={(e) => setRowsSafe(parseInt(e.target.value, 10) || 1)}
+                className="w-16 px-2 py-1 border border-slate-300 rounded text-sm"
+              />
+            </label>
             {/* 分割セルの画像サイズ表示 */}
             {gridFrame && rows > 0 && cols > 0 && (
               <span className="text-sm text-slate-600 mr-2">
-                セルサイズ: {toEvenFloor(gridFrame.w / cols)} × {toEvenFloor(gridFrame.h / rows)}
+                セルサイズ（W × H）: {toEvenFloor(gridFrame.w / cols)} × {toEvenFloor(gridFrame.h / rows)}
               </span>
             )}
             <button
@@ -666,7 +666,7 @@ export function EditorArea({
               disabled={loading || !gridFrame}
               className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              分割実行
+              切り抜き実行
             </button>
           </div>
         </div>
