@@ -314,7 +314,7 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll, b
           disabled={processedImages.length === 0}
           className="w-full py-2 px-4 border border-slate-300 text-slate-700 text-sm rounded-lg hover:bg-slate-100 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          プレビューを全部クリア
+          クリア
         </button>
       </div>
 
