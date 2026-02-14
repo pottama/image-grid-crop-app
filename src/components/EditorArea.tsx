@@ -213,14 +213,15 @@ export function EditorArea({
     []
   );
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent) => {
+  const processDragStart = useCallback(
+    (clientX: number, clientY: number, isTouch: boolean) => {
       if (!imgSize) return;
-      const { x, y } = toImageCoords(e.clientX, e.clientY);
-      if (e.button !== 0) return;
+      const { x, y } = toImageCoords(clientX, clientY);
+
+      const hitRadius = isTouch ? 24 : 12; // タッチ時は判定範囲を広げる
+      const handleSize = hitRadius / displayScale;
 
       if (mode === 'grid' && gridFrame) {
-        const handleSize = 12 / displayScale;
         const inFrame =
           x >= gridFrame.x && x <= gridFrame.x + gridFrame.w && y >= gridFrame.y && y <= gridFrame.y + gridFrame.h;
         const onLeft = Math.abs(x - gridFrame.x) < handleSize;
@@ -238,10 +239,9 @@ export function EditorArea({
         } else if (inFrame) {
           dragState.current = { type: 'frame', start: { ...gridFrame }, startXY: { x, y }, handle: 'move' };
         } else {
-          panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+          panStart.current = { x: clientX, y: clientY, panX: pan.x, panY: pan.y };
         }
       } else if (mode === 'crop' && cropRect) {
-        const handleSize = 12 / displayScale;
         const inRect = x >= cropRect.x && x <= cropRect.x + cropRect.w && y >= cropRect.y && y <= cropRect.y + cropRect.h;
         const onRight = Math.abs(x - (cropRect.x + cropRect.w)) < handleSize && y >= cropRect.y && y <= cropRect.y + cropRect.h;
         const onBottom = Math.abs(y - (cropRect.y + cropRect.h)) < handleSize && x >= cropRect.x && x <= cropRect.x + cropRect.w;
@@ -250,27 +250,27 @@ export function EditorArea({
         } else if (inRect) {
           dragState.current = { type: 'crop', start: { ...cropRect }, startXY: { x, y }, handle: 'move' };
         } else {
-          panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+          panStart.current = { x: clientX, y: clientY, panX: pan.x, panY: pan.y };
         }
       } else {
-        panStart.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+        panStart.current = { x: clientX, y: clientY, panX: pan.x, panY: pan.y };
       }
     },
     [mode, gridFrame, cropRect, imgSize, toImageCoords, displayScale, pan]
   );
 
-  const onMouseMove = useCallback(
-    (e: React.MouseEvent) => {
+  const processDragMove = useCallback(
+    (clientX: number, clientY: number) => {
       if (panStart.current) {
         setPan({
-          x: panStart.current.panX + e.clientX - panStart.current.x,
-          y: panStart.current.panY + e.clientY - panStart.current.y,
+          x: panStart.current.panX + clientX - panStart.current.x,
+          y: panStart.current.panY + clientY - panStart.current.y,
         });
         return;
       }
       const d = dragState.current;
       if (d && imgSize) {
-        const { x, y } = toImageCoords(e.clientX, e.clientY);
+        const { x, y } = toImageCoords(clientX, clientY);
         if (d.type === 'frame') {
           let next: FrameRect = { ...d.start };
           if (d.handle === 'move') {
@@ -341,7 +341,7 @@ export function EditorArea({
         setHoverCursor('default');
         return;
       }
-      const { x, y } = toImageCoords(e.clientX, e.clientY);
+      const { x, y } = toImageCoords(clientX, clientY);
       const handleSize = 12 / displayScale;
       if (mode === 'grid' && gridFrame) {
         const inFrame =
@@ -369,6 +369,44 @@ export function EditorArea({
     },
     [toImageCoords, imgSize, clampFrame, mode, gridFrame, cropRect, displayScale]
   );
+
+  const onMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (e.button !== 0) return;
+      processDragStart(e.clientX, e.clientY, false);
+    },
+    [processDragStart]
+  );
+
+  const onMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      processDragMove(e.clientX, e.clientY);
+    },
+    [processDragMove]
+  );
+
+  const onTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 1) {
+        processDragStart(e.touches[0].clientX, e.touches[0].clientY, true);
+      }
+    },
+    [processDragStart]
+  );
+
+  const onTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (e.touches.length === 1) {
+        processDragMove(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    },
+    [processDragMove]
+  );
+
+  const onTouchEnd = useCallback(() => {
+    panStart.current = null;
+    dragState.current = null;
+  }, []);
 
   const onMouseUp = useCallback(() => {
     panStart.current = null;
@@ -764,6 +802,9 @@ export function EditorArea({
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
         onMouseLeave={onMouseLeave}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
         style={{ touchAction: 'none', cursor: hoverCursor }}
       >
         {imageDataUrl && (
