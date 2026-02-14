@@ -288,6 +288,7 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
               <input type="checkbox" checked={resizeEnabled} onChange={(e) => setResizeEnabled(e.target.checked)} />
               <span className="text-sm text-slate-700">リサイズして出力</span>
             </label>
+            {resizeEnabled && (
             <div className="grid grid-cols-2 gap-2 mb-2">
               <label className="flex flex-col text-sm">
                 横 (px)
@@ -352,10 +353,13 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
                 />
               </label>
             </div>
-            <label className="flex items-center gap-2 mb-4">
-              <input type="checkbox" checked={keepAspect} onChange={(e) => setKeepAspect(e.target.checked)} disabled={!resizeEnabled} />
-              <span className="text-sm text-slate-700">アスペクト比を固定する</span>
-            </label>
+            )}
+            {resizeEnabled && (
+              <label className="flex items-center gap-2 mb-4">
+                <input type="checkbox" checked={keepAspect} onChange={(e) => setKeepAspect(e.target.checked)} />
+                <span className="text-sm text-slate-700">アスペクト比を固定する</span>
+              </label>
+            )}
             <div className="flex items-center justify-end gap-2">
               <button type="button" onClick={() => setOptsModalOpen(false)} disabled={processing} className="px-3 py-1.5 border rounded text-sm">キャンセル</button>
               {modalTarget === 'all' ? (
