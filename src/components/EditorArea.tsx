@@ -521,7 +521,7 @@ export function EditorArea({
             disabled={loading}
             className="px-3 py-1.5 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-700 disabled:opacity-50"
           >
-            {loading ? 'AI解析中...' : '背景透過'}
+            {loading ? '解析中...' : '背景透過'}
           </button>
           {loading && progress && (
             <div className="flex items-center gap-2">
