@@ -55,7 +55,7 @@ export function WorkScreen({
           onClick={handleResetClick}
           className="px-4 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
         >
-          画像を削除して戻る
+          トップに戻る
         </button>
       </header>
 
