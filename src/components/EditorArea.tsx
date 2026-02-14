@@ -59,6 +59,10 @@ export function EditorArea({
   const [cropRect, setCropRect] = useState<FrameRect | null>(null);
   const [cropIndex, setCropIndex] = useState(0);
 
+  const [localCropW, setLocalCropW] = useState<number | ''>('');
+  const [localCropH, setLocalCropH] = useState<number | ''>('');
+  const [activeInput, setActiveInput] = useState<'w' | 'h' | null>(null);
+
   const [hoverCursor, setHoverCursor] = useState<string>('default');
   const [containerSize, setContainerSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
 
@@ -111,6 +115,14 @@ export function EditorArea({
       setCropRect({ x: 0, y: 0, w: ensureEven(imgSize.w), h: ensureEven(imgSize.h) });
     }
   }, [imgSize]);
+
+  useEffect(() => {
+    if (cropRect) {
+      // 編集中でない場合のみ、外部からの変更（ドラッグ操作など）を入力欄に同期する
+      if (activeInput !== 'w') setLocalCropW(cropRect.w);
+      if (activeInput !== 'h') setLocalCropH(cropRect.h);
+    }
+  }, [cropRect, activeInput]);
 
   useEffect(() => {
     const el = gridOverlayRef.current;
@@ -684,10 +696,23 @@ export function EditorArea({
               min={MIN_CROP_SIZE}
               max={cropRect && imgSize ? imgSize.w - cropRect.x : undefined}
               step="2"
-              value={cropRect ? ensureEven(cropRect.w) : 0}
-              onInput={(e) => {
-                const val = parseInt((e.target as HTMLInputElement).value, 10);
-                if (!isNaN(val)) setCropWidth(val);
+              value={localCropW}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === '') {
+                  setLocalCropW('');
+                  return;
+                }
+                const val = parseInt(v, 10);
+                setLocalCropW(val);
+                // MIN_CROP_SIZEより大きい場合のみリアルタイム反映
+                if (!isNaN(val) && val > MIN_CROP_SIZE) setCropWidth(val);
+              }}
+              onFocus={() => setActiveInput('w')}
+              onBlur={() => {
+                setActiveInput(null);
+                if (typeof localCropW === 'number') setCropWidth(Math.max(MIN_CROP_SIZE, localCropW));
+                else if (cropRect) setLocalCropW(cropRect.w);
               }}
               className="w-20 px-2 py-1 border border-slate-300 rounded text-sm"
             />
@@ -699,10 +724,23 @@ export function EditorArea({
               min={MIN_CROP_SIZE}
               max={cropRect && imgSize ? imgSize.h - cropRect.y : undefined}
               step="2"
-              value={cropRect ? ensureEven(cropRect.h) : 0}
-              onInput={(e) => {
-                const val = parseInt((e.target as HTMLInputElement).value, 10);
-                if (!isNaN(val)) setCropHeight(val);
+              value={localCropH}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (v === '') {
+                  setLocalCropH('');
+                  return;
+                }
+                const val = parseInt(v, 10);
+                setLocalCropH(val);
+                // MIN_CROP_SIZEより大きい場合のみリアルタイム反映
+                if (!isNaN(val) && val > MIN_CROP_SIZE) setCropHeight(val);
+              }}
+              onFocus={() => setActiveInput('h')}
+              onBlur={() => {
+                setActiveInput(null);
+                if (typeof localCropH === 'number') setCropHeight(Math.max(MIN_CROP_SIZE, localCropH));
+                else if (cropRect) setLocalCropH(cropRect.h);
               }}
               className="w-20 px-2 py-1 border border-slate-300 rounded text-sm"
             />

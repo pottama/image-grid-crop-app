@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import JSZip from 'jszip';
 import type { ProcessedImage } from '../types';
+import { MIN_CROP_SIZE } from '../types';
 import { ensureEven } from '../utils/evenSize';
 import pica from 'pica';
 
@@ -236,6 +237,40 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll, b
     [resizeEnabled, targetW, targetH, keepAspect]
   );
 
+  const handleDimensionBlur = useCallback(
+    (
+      dimension: 'w' | 'h',
+      value: number | '',
+      setter: (v: number | '') => void,
+      otherSetter: (v: number | '') => void
+    ) => {
+      if (value === '') return;
+
+      let val = Math.max(MIN_CROP_SIZE, value); // 最低値（MIN_CROP_SIZE）
+      val = ensureEven(Math.round(val)); // 偶数補正
+
+      if (keepAspect && modalTarget && origW && origH) {
+        // オリジナルサイズを超えないようにキャップ（アスペクト比維持モード時）
+        if (dimension === 'w' && val > origW) val = ensureEven(origW);
+        if (dimension === 'h' && val > origH) val = ensureEven(origH);
+
+        setter(val);
+
+        // 反対側の再計算
+        if (dimension === 'w') {
+          const hCalc = Math.round((val * origH) / origW);
+          otherSetter(ensureEven(Math.max(MIN_CROP_SIZE, hCalc)));
+        } else {
+          const wCalc = Math.round((val * origW) / origH);
+          otherSetter(ensureEven(Math.max(MIN_CROP_SIZE, wCalc)));
+        }
+      } else {
+        setter(val);
+      }
+    },
+    [keepAspect, modalTarget, origW, origH]
+  );
+
               return (
               <div className="flex flex-col h-full min-h-0">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white">
@@ -298,29 +333,25 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll, b
                 横 (px)
                 <input
                   type="number"
-                  min={2}
+                  min={MIN_CROP_SIZE}
                   step="2"
                   value={targetW}
                   onChange={(e) => {
-                    const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
-                    if (val === '') {
+                    const v = e.target.value;
+                    if (v === '') {
                       setTargetW('');
-                      if (keepAspect) setTargetH('');
                       return;
                     }
-                    let w = val as number;
-                    if (keepAspect && modalTarget && origW && origH) {
-                      // prevent upscaling by capping to original width
-                      if (w > origW) w = origW;
-                      const hCalc = Math.round((w * origH) / origW);
-                      const hEven = ensureEven(Math.max(2, hCalc));
-                      const wEven = ensureEven(Math.max(2, Math.round(w)));
-                      setTargetW(wEven);
-                      setTargetH(hEven);
-                    } else {
-                      setTargetW(Math.round(w));
+                    const val = parseInt(v, 10);
+                    setTargetW(val);
+
+                    // MIN_CROP_SIZEより大きい場合のみ連動計算を行う
+                    if (keepAspect && modalTarget && origW && origH && val > MIN_CROP_SIZE) {
+                      const hCalc = Math.round((val * origH) / origW);
+                      setTargetH(ensureEven(Math.max(MIN_CROP_SIZE, hCalc)));
                     }
                   }}
+                  onBlur={() => handleDimensionBlur('w', targetW, setTargetW, setTargetH)}
                   disabled={!resizeEnabled}
                   className="mt-1 px-2 py-1 border border-slate-300 rounded"
                 />
@@ -329,29 +360,25 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll, b
                 縦 (px)
                 <input
                   type="number"
-                  min={2}
+                  min={MIN_CROP_SIZE}
                   step="2"
                   value={targetH}
                   onChange={(e) => {
-                    const val = e.target.value === '' ? '' : parseInt(e.target.value, 10);
-                    if (val === '') {
+                    const v = e.target.value;
+                    if (v === '') {
                       setTargetH('');
-                      if (keepAspect) setTargetW('');
                       return;
                     }
-                    let h = val as number;
-                    if (keepAspect && modalTarget && origW && origH) {
-                      // prevent upscaling by capping to original height
-                      if (h > origH) h = origH;
-                      const wCalc = Math.round((h * origW) / origH);
-                      const wEven = ensureEven(Math.max(2, wCalc));
-                      const hEven = ensureEven(Math.max(2, Math.round(h)));
-                      setTargetH(hEven);
-                      setTargetW(wEven);
-                    } else {
-                      setTargetH(Math.round(h));
+                    const val = parseInt(v, 10);
+                    setTargetH(val);
+
+                    // MIN_CROP_SIZEより大きい場合のみ連動計算を行う
+                    if (keepAspect && modalTarget && origW && origH && val > MIN_CROP_SIZE) {
+                      const wCalc = Math.round((val * origW) / origH);
+                      setTargetW(ensureEven(Math.max(MIN_CROP_SIZE, wCalc)));
                     }
                   }}
+                  onBlur={() => handleDimensionBlur('h', targetH, setTargetH, setTargetW)}
                   disabled={!resizeEnabled}
                   className="mt-1 px-2 py-1 border border-slate-300 rounded"
                 />
