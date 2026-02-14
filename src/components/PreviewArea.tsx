@@ -8,6 +8,7 @@ interface PreviewAreaProps {
   baseName: string;
   onRemove: (id: string) => void;
   onClearAll: () => void;
+  bgMode: 'checkerboard' | 'slate';
 }
 
 function getFileName(p: ProcessedImage): string {
@@ -20,7 +21,7 @@ function getFileName(p: ProcessedImage): string {
   return `${p.baseName}.${p.extension}`;
 }
 
-export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }: PreviewAreaProps) {
+export function PreviewArea({ processedImages, baseName, onRemove, onClearAll, bgMode }: PreviewAreaProps) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [zipLoading, setZipLoading] = useState(false);
   const [optsModalOpen, setOptsModalOpen] = useState(false);
@@ -398,13 +399,21 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll }:
                 onDownload={handleDownload}
                 onRemove={onRemove}
                 getFileName={getFileName}
+                bgMode={bgMode}
               />
             ))}
           </div>
         ) : (
           <ul className="space-y-2">
             {processedImages.map((p) => (
-              <ListItemPreview key={p.id} image={p} getFileName={getFileName} onDownload={handleDownload} onRemove={onRemove} />
+              <ListItemPreview
+                key={p.id}
+                image={p}
+                getFileName={getFileName}
+                onDownload={handleDownload}
+                onRemove={onRemove}
+                bgMode={bgMode}
+              />
             ))}
           </ul>
         )}
@@ -418,11 +427,13 @@ function ListItemPreview({
   getFileName,
   onDownload,
   onRemove,
+  bgMode,
 }: {
   image: ProcessedImage;
   getFileName: (p: ProcessedImage) => string;
   onDownload: (p: ProcessedImage) => void;
   onRemove: (id: string) => void;
+  bgMode: 'checkerboard' | 'slate';
 }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -436,7 +447,9 @@ function ListItemPreview({
         <img
           src={url}
           alt=""
-          className="w-12 h-12 object-cover rounded bg-white border border-slate-200"
+          className={`w-12 h-12 object-cover rounded border border-slate-200 ${
+            bgMode === 'checkerboard' ? 'checkerboard' : 'bg-slate-500'
+          }`}
         />
       )}
       <span className="flex-1 text-sm text-slate-700 truncate">{getFileName(image)}</span>
@@ -474,11 +487,13 @@ function PreviewCard({
   onDownload,
   onRemove,
   getFileName,
+  bgMode,
 }: {
   image: ProcessedImage;
   onDownload: (p: ProcessedImage) => void;
   onRemove: (id: string) => void;
   getFileName: (p: ProcessedImage) => string;
+  bgMode: 'checkerboard' | 'slate';
 }) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -490,7 +505,9 @@ function PreviewCard({
   }, [image.blob]);
   return (
     <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-      <div className="aspect-square relative bg-slate-100 checkerboard">
+      <div className={`aspect-square relative ${
+        bgMode === 'checkerboard' ? 'checkerboard' : 'bg-slate-500'
+      }`}>
         {url && <img src={url} alt="" className="w-full h-full object-contain" />}
       </div>
       <div className="p-2 flex items-center justify-between gap-1">

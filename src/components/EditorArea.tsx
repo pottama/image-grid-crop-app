@@ -24,6 +24,8 @@ interface EditorAreaProps {
   onUndo: () => void;
   onAddProcessed: (images: ProcessedImage[]) => void;
   baseName: string;
+  bgMode: 'checkerboard' | 'slate';
+  onToggleBgMode: () => void;
 }
 
 export function EditorArea({
@@ -35,6 +37,8 @@ export function EditorArea({
   onUndo,
   onAddProcessed,
   baseName,
+  bgMode,
+  onToggleBgMode,
 }: EditorAreaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -45,7 +49,6 @@ export function EditorArea({
   const [mode, setMode] = useState<EditorMode>('grid');
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState<{ key: string; current: number; total: number } | null>(null);
-  const [bgMode, setBgMode] = useState<'checkerboard' | 'slate'>('checkerboard');
 
   // Grid mode
   const [rows, setRows] = useState(2);
@@ -589,7 +592,7 @@ export function EditorArea({
         <div className="w-px h-6 bg-slate-300"></div>
         <button
           type="button"
-          onClick={() => setBgMode(bgMode === 'checkerboard' ? 'slate' : 'checkerboard')}
+          onClick={onToggleBgMode}
           className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50"
           title="背景切り替え"
         >

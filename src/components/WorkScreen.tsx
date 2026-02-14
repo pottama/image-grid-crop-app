@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import type { ProcessedImage } from '../types';
 import { EditorArea } from './EditorArea';
 import { PreviewArea } from './PreviewArea';
@@ -30,6 +30,12 @@ export function WorkScreen({
   onRemoveProcessed,
   onClearAllProcessed,
 }: WorkScreenProps) {
+  const [bgMode, setBgMode] = useState<'checkerboard' | 'slate'>('checkerboard');
+
+  const handleToggleBgMode = useCallback(() => {
+    setBgMode((prev) => (prev === 'checkerboard' ? 'slate' : 'checkerboard'));
+  }, []);
+
   const handleResetClick = useCallback(() => {
     if (window.confirm('現在の作業を破棄してトップ画面に戻りますか？')) {
       onReset();
@@ -64,6 +70,8 @@ export function WorkScreen({
             onUndo={onUndo}
             onAddProcessed={onAddProcessed}
             baseName={baseName}
+            bgMode={bgMode}
+            onToggleBgMode={handleToggleBgMode}
           />
         </section>
         <section className="w-full lg:w-96 shrink-0 flex flex-col bg-slate-50 min-h-0 overflow-hidden">
@@ -72,6 +80,7 @@ export function WorkScreen({
             baseName={baseName}
             onRemove={onRemoveProcessed}
             onClearAll={onClearAllProcessed}
+            bgMode={bgMode}
           />
         </section>
       </div>
