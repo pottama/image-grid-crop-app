@@ -208,14 +208,23 @@ export function EditorArea({
     [imgSize]
   );
 
-  const onWheel = useCallback(
-    (e: React.WheelEvent) => {
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setScale((s) => Math.max(0.2, Math.min(5, s + delta)));
-    },
-    []
-  );
+      if (e.ctrlKey || e.metaKey) {
+        const delta = e.deltaY > 0 ? -0.1 : 0.1;
+        setScale((s) => Math.max(0.2, Math.min(5, s + delta)));
+      } else {
+        setPan((p) => ({ x: p.x - e.deltaX, y: p.y - e.deltaY }));
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, []);
 
   const processDragStart = useCallback(
     (clientX: number, clientY: number, isTouch: boolean) => {
@@ -824,8 +833,7 @@ export function EditorArea({
 
       <div
         ref={containerRef}
-        className="flex-1 min-h-[300px] bg-slate-300 overflow-auto relative flex items-center justify-center"
-        onWheel={onWheel}
+        className="flex-1 min-h-[300px] bg-slate-300 overflow-hidden relative flex items-center justify-center"
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
