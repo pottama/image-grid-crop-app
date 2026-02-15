@@ -9,8 +9,6 @@ export async function removeBackground(
       format: 'image/png',
       quality: 1,
     },
-    device: 'gpu',
-    model: 'isnet',
     progress: onProgress,
   });
 }

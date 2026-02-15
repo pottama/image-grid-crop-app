@@ -26,6 +26,8 @@ interface EditorAreaProps {
   baseName: string;
   bgMode: 'checkerboard' | 'slate';
   onToggleBgMode: () => void;
+  enableBgRemoval: boolean;
+  customBgColor: string;
 }
 
 export function EditorArea({
@@ -39,6 +41,8 @@ export function EditorArea({
   baseName,
   bgMode,
   onToggleBgMode,
+  enableBgRemoval,
+  customBgColor,
 }: EditorAreaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
@@ -552,51 +556,55 @@ export function EditorArea({
   return (
     <div className="flex flex-col h-full">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-slate-200 flex-wrap">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={runBackgroundRemoval}
-            disabled={loading}
-            className="px-3 py-1.5 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-700 disabled:opacity-50"
-          >
-            {loading ? '解析中...' : '背景透過'}
-          </button>
-          {loading && progress && (
+        {enableBgRemoval && (
+          <>
             <div className="flex items-center gap-2">
-              <div className="w-40 h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-blue-600 transition-all duration-300"
-                  style={{ width: `${(progress.current / progress.total) * 100}%` }}
-                ></div>
-              </div>
-              <span className="text-xs text-slate-600">
-                {Math.round((progress.current / progress.total) * 100)}%
-              </span>
+              <button
+                type="button"
+                onClick={runBackgroundRemoval}
+                disabled={loading}
+                className="px-3 py-1.5 bg-slate-800 text-white text-sm rounded-lg hover:bg-slate-700 disabled:opacity-50"
+              >
+                {loading ? '解析中...' : '背景透過'}
+              </button>
+              {loading && progress && (
+                <div className="flex items-center gap-2">
+                  <div className="w-40 h-2 bg-slate-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-blue-600 transition-all duration-300"
+                      style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs text-slate-600">
+                    {Math.round((progress.current / progress.total) * 100)}%
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <button
-          type="button"
-          onClick={onUndo}
-          disabled={!canUndo || loading}
-          className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50"
-          title="元に戻す (Undo)"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="w-5 h-5"
-          >
-            <path d="M3 7v6h6" />
-            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
-          </svg>
-        </button>
-        <div className="w-px h-6 bg-slate-300"></div>
+            <button
+              type="button"
+              onClick={onUndo}
+              disabled={!canUndo || loading}
+              className="p-1.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50"
+              title="元に戻す (Undo)"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-5 h-5"
+              >
+                <path d="M3 7v6h6" />
+                <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+              </svg>
+            </button>
+            <div className="w-px h-6 bg-slate-300"></div>
+          </>
+        )}
         <button
           type="button"
           onClick={() => zoomBy(-0.1)}
@@ -810,10 +818,10 @@ export function EditorArea({
         {imageDataUrl && (
           <div
             className={`absolute flex items-center justify-center ${
-              bgMode === 'checkerboard' ? 'checkerboard' : 'bg-slate-500'
+              bgMode === 'checkerboard' ? 'checkerboard' : ''
             }`}
-            style={
-              imgSize
+            style={{
+              ...(imgSize
                 ? {
                     width: displayW,
                     height: displayH,
@@ -827,8 +835,9 @@ export function EditorArea({
                     bottom: 0,
                     width: '100%',
                     height: '100%',
-                  }
-            }
+                  }),
+              backgroundColor: bgMode === 'checkerboard' ? undefined : customBgColor,
+            }}
           >
             <img
               ref={imageRef}
