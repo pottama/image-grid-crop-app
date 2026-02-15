@@ -604,7 +604,6 @@ export function EditorArea({
                 <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
               </svg>
             </button>
-            <div className="w-px h-6 bg-slate-300"></div>
           </>
         )}
         <button
@@ -649,7 +648,6 @@ export function EditorArea({
             <line x1="8" y1="11" x2="14" y2="11" />
           </svg>
         </button>
-        <div className="w-px h-6 bg-slate-300"></div>
         <button
           type="button"
           onClick={onToggleBgMode}
@@ -751,7 +749,7 @@ export function EditorArea({
               disabled={loading || !gridFrame}
               className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              カット
+              分割
             </button>
           </div>
         </div>
@@ -821,7 +819,7 @@ export function EditorArea({
             disabled={loading || !cropRect}
             className="px-4 py-1.5 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 disabled:opacity-50"
           >
-            カット
+            切り抜き
           </button>
         </div>
       )}

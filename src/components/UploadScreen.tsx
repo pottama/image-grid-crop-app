@@ -60,9 +60,12 @@ export function UploadScreen({ onFileAccepted }: UploadScreenProps) {
   return (
     <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-6">
       <div className="max-w-lg w-full">
-        <h1 className="text-2xl font-bold text-slate-800 text-center mb-2">
-          画像 グリッド・範囲指定 切り抜きツール
+        <h1 className="text-2xl font-bold text-slate-800 text-center">
+          画像分割ツール
         </h1>
+        <h2 className="text-1xl text-slate-800 text-center mb-2">
+          （グリッド・範囲指定）
+        </h2>
         <p className="text-sm text-slate-600 text-center mb-6">
           推奨サイズ: 200px〜4096px (最大10MB)
           <br />
