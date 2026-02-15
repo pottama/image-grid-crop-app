@@ -57,6 +57,8 @@ export function EditorArea({
   // Grid mode
   const [rows, setRows] = useState(2);
   const [cols, setCols] = useState(2);
+  const [localRows, setLocalRows] = useState<number | ''>(2);
+  const [localCols, setLocalCols] = useState<number | ''>(2);
   const [gridFrame, setGridFrame] = useState<FrameRect | null>(null);
 
   // Crop mode
@@ -699,8 +701,19 @@ export function EditorArea({
                 type="number"
                 min={1}
                 max={MAX_GRID}
-                value={cols}
-                onChange={(e) => setColsSafe(parseInt(e.target.value, 10) || 1)}
+                value={localCols}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === '') {
+                    setLocalCols('');
+                    return;
+                  }
+                  const val = parseInt(v, 10);
+                  if (isNaN(val)) return;
+                  setLocalCols(val);
+                  if (val >= 1) setColsSafe(val);
+                }}
+                onBlur={() => setLocalCols(cols)}
                 className="w-16 px-2 py-1 border border-slate-300 rounded text-sm"
               />
             </label>
@@ -710,8 +723,19 @@ export function EditorArea({
                 type="number"
                 min={1}
                 max={MAX_GRID}
-                value={rows}
-                onChange={(e) => setRowsSafe(parseInt(e.target.value, 10) || 1)}
+                value={localRows}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  if (v === '') {
+                    setLocalRows('');
+                    return;
+                  }
+                  const val = parseInt(v, 10);
+                  if (isNaN(val)) return;
+                  setLocalRows(val);
+                  if (val >= 1) setRowsSafe(val);
+                }}
+                onBlur={() => setLocalRows(rows)}
                 className="w-16 px-2 py-1 border border-slate-300 rounded text-sm"
               />
             </label>
