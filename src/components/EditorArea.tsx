@@ -210,8 +210,6 @@ export function EditorArea({
 
   const onWheel = useCallback(
     (e: React.WheelEvent) => {
-      // Only zoom when Command (meta) key is pressed (macOS Command key)
-      if (!e.metaKey) return;
       e.preventDefault();
       const delta = e.deltaY > 0 ? -0.1 : 0.1;
       setScale((s) => Math.max(0.2, Math.min(5, s + delta)));
