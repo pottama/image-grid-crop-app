@@ -4,6 +4,7 @@ import type { ProcessedImage } from '../types';
 import { MIN_CROP_SIZE } from '../types';
 import { ensureEven } from '../utils/evenSize';
 import pica from 'pica';
+import { AdUnit } from './AdUnit';
 
 interface PreviewAreaProps {
   processedImages: ProcessedImage[];
@@ -450,6 +451,10 @@ export function PreviewArea({ processedImages, baseName, onRemove, onClearAll, b
             ))}
           </ul>
         )}
+      </div>
+
+      <div className="border-t border-slate-200 shrink-0">
+        <AdUnit />
       </div>
     </div>
   );

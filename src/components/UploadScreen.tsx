@@ -1,5 +1,7 @@
 import { useCallback, useState } from 'react';
 import { validateFile } from '../utils/validation';
+import { AdUnit } from './AdUnit';
+import { PrivacyPolicy } from './PrivacyPolicy';
 
 interface UploadScreenProps {
   onFileAccepted: (file: File, dataUrl: string) => void;
@@ -8,6 +10,7 @@ interface UploadScreenProps {
 export function UploadScreen({ onFileAccepted }: UploadScreenProps) {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
 
   const processFile = useCallback(
     async (file: File) => {
@@ -100,7 +103,21 @@ export function UploadScreen({ onFileAccepted }: UploadScreenProps) {
             {error}
           </div>
         )}
+
+        <AdUnit />
+
+        <div className="mt-4 text-center">
+          <button
+            type="button"
+            onClick={() => setShowPrivacyPolicy(true)}
+            className="text-xs text-slate-400 hover:text-slate-600 underline"
+          >
+            プライバシーポリシー
+          </button>
+        </div>
       </div>
+
+      {showPrivacyPolicy && <PrivacyPolicy onClose={() => setShowPrivacyPolicy(false)} />}
     </div>
   );
 }
